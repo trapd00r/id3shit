@@ -1,0 +1,7 @@
+id3shit - Less sucky id3-editor
+
+All ID3-editors that I've tried sucked. This suck too, but not as much.
+
+To install dependencies:
+  # cpan MP3::Info;
+To install id3shit, just move it to /usr/local/bin or anywhere in your $PATH.
