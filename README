@@ -2,6 +2,23 @@ id3shit - Less sucky id3-editor
 
 All ID3-editors that I've tried sucked. This suck too, but not as much.
 
+  USAGE: id3shit.pl [OPTIONS] <FILES>
+
+  OPTIONS:
+    -t  --tags    Show ID3V{1,2} tags
+    -i  --info    Show audio information
+    -r  --remove  Remove known tags
+    -w  --write   Write tags. The syntax is --write FIELD VALUE FILE
+                  Legal fields are ARTIST, ALBUM, TITLE, YEAR, COMMENT,
+                  TRACKNUM, GENRE.
+
+                  Examples:
+                  --write artist laleh *.mp3
+                  Will give us something like:
+                  >> ARTIST: Laleh
+
+###############################################################################
+
 To install dependencies:
   # cpan MP3::Info;
 To install id3shit, just move it to /usr/local/bin or anywhere in your $PATH.
