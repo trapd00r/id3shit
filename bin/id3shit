@@ -1,39 +1,23 @@
-#!/usr/bin/perl 
-# id3shit - Commandline based id3 editor that sucks less
-# Copyright (C) 2010 trapd00r <trapd00r@trapd00r.se>
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+#!/usr/bin/perl
 use strict;
-use warnings;
 
 use MP3::Info;
 use MP3::Info qw(:genres);
 use Getopt::Long;
 
-my $APPLICATION_NAME = 'id3shit';
-my $APPLICATION_VERSION = '2.0';
+our $APP     = 'id3shit';
+our $VERSION = 2.1;
 
 my $mp3 = MP3::Info->new;
 
-our ($read_tags,$read_info, $remove, @write, $genres);
+our ($read_tags,$read_info, $remove, @write, $genres, $rename);
 
 GetOptions('read_tags'  =>  \$read_tags,
            'read_info'  =>  \$read_info,
            'remove'     =>  \$remove,
            'write=s{2}' =>  \@write,
            'genres'     =>  \$genres,
+           'name'     =>  \$rename,
            );
 
 my @files = @ARGV;
@@ -54,6 +38,9 @@ if(@write) {
 }
 if($genres) {
   &show_genres;
+}
+if($rename) {
+  name(@files);
 }
 
 sub show_genres {
@@ -100,6 +87,19 @@ sub read_tags {
   exit 0;
 }
 
+sub name {
+  my @files = @_;
+  return unless(@files);
+  print "$_\n" for @files;
+
+  for my $file(@files) {
+    my $tags = get_mp3tag($file, 1);
+    print Dumper $tags;
+    print "OK\n";
+  }
+  exit(0);
+}
+
 sub read_info {
   my @f_to_operate = @_;
   foreach my $file(@f_to_operate) {
@@ -116,8 +116,8 @@ sub read_info {
 
 sub help {
   print << "HLEP";
-  $APPLICATION_NAME $APPLICATION_VERSION
-  USAGE: $0 [OPTIONS] <FILES>
+  $APP $VERSION
+  USAGE: id3shit [OPTIONS] <FILES>
 
   OPTIONS:
     -t  --tags    Show ID3V{1,2} tags
