@@ -1,135 +1,176 @@
 #!/usr/bin/perl
 use strict;
 
+our $APP       = 'id3shit';
+our $VERSION   = 2.1;
+our $COPYRIGHT = "(C) Magnus Woldrich 2009-2010";
+
+use Data::Dumper;
 use MP3::Info;
-use MP3::Info qw(:genres);
+use MP3::Info ':genres';
+use File::Copy;
 use Getopt::Long;
 
-our $APP     = 'id3shit';
-our $VERSION = 2.1;
+usage() unless(@ARGV);
 
-my $mp3 = MP3::Info->new;
+my $mp3 = MP3::Info->new();
 
-our ($read_tags,$read_info, $remove, @write, $genres, $rename);
+our(@opt_write);
+GetOptions(
+  'tags=s{1,}'    => sub {shift; read_tags(@_);},
+  'rename=s{1,}'  => sub {shift; rename_by_tag(@_);},
+  'info=s{1,}'    => sub {shift; show_info(@_);},
+  'genres'        => \&list_genres,
+  'write=s{1,}'   => \@opt_write,
+  'strip=s{1,}'   => sub {shift; remove_tags(@_);},
+);
 
-GetOptions('read_tags'  =>  \$read_tags,
-           'read_info'  =>  \$read_info,
-           'remove'     =>  \$remove,
-           'write=s{2}' =>  \@write,
-           'genres'     =>  \$genres,
-           'name'     =>  \$rename,
-           );
+write_tags(@opt_write) if(@opt_write);
 
-my @files = @ARGV;
-if(!@ARGV) {
-  &help;
-}
-if($read_tags) {
-  &read_tags(@files);
-}
-if($read_info) {
-  &read_info(@files);
-}
-if($remove) {
-  &remove_tags(@files);
-}
-if(@write) {
-  &write_tags(@files);
-}
-if($genres) {
-  &show_genres;
-}
-if($rename) {
-  name(@files);
-}
-
-sub show_genres {
-  foreach my $genre(sort(keys(%mp3_genres))) {
-    printf("% 2s | %0s\n", $mp3_genres{$genre}, $genre);
-  }
-  printf("----------\n\033[31;1m%0s \033[0m|\033[31;1m %0s\033[0m\n",
-        'NO', 'NAME');
-  exit 0;
-}
-
-sub write_tags {
-  my @f_to_write = @_;
-  foreach my $file(@files) {
-    my $tags = get_mp3tag($file, 1);
-    $tags->{uc($write[0])}=ucfirst($write[1]);
-    
-    set_mp3tag($file, $tags);
-    &read_tags($file);
-  }
-  exit 0;
-}
-
-
-sub remove_tags {
-  my @f_to_fuckup = @_;
-  foreach my $file(@f_to_fuckup) {
-    print 'Removed ', remove_mp3tag($file, 'ALL'), "bytes\n";
-  }
-  exit 0;
-}
-
-sub read_tags {
-  my @f_to_read = @_;
-  foreach my $file(@f_to_read) {
-    my $tags = get_mp3tag($file, 1);
-
-    printf("%11s : %0s\n", 'FILE', "\033[31;1m$file\033[0m");                  
-    while(my($key,$value) = each %$tags) {
-      printf("%11s : %0s\n", $key, $value);
-    }
-    print "\n";
-  }
-  exit 0;
-}
-
-sub name {
+sub show_info {
   my @files = @_;
   return unless(@files);
-  print "$_\n" for @files;
 
-  for my $file(@files) {
-    my $tags = get_mp3tag($file, 1);
-    print Dumper $tags;
-    print "OK\n";
+  for my $f(@files) {
+    my $info = get_mp3info($f);
+    print "Doesnt look like audio to me\n" and exit(1) unless($info);
+
+    printf("%12s: \033[1m%s\033[0m\n", 'File', $f);
+    for my $k(sort(keys(%{$info}))) {
+      printf("%12s: %s\n",ucfirst(lc($k)),$info->{$k}) unless(ref($info->{$k}));
+    }
   }
   exit(0);
 }
 
-sub read_info {
-  my @f_to_operate = @_;
-  foreach my $file(@f_to_operate) {
-    my $info = get_mp3info($file);
+sub read_tags {
+  my $changed_tag = shift; # called from write_tags()?
+  my @files = @_;
 
-    printf("%12s : %0s\n", 'FILE', "\033[31;1m$file\033[0m");
-    while(my($key,$value) = each %$info) {
-      printf("%12s : %0s\n", $key, $value);
-    }
-    print "\n";
+  if(-f $changed_tag) {
+    push(@files, $changed_tag); # ... nope
   }
-  exit 0;
+
+  my @missing_tags;
+  for my $f(@files) {
+    my $tag = get_mp3tag($f);
+    printf("%7s: \033[1m%s\033[0m\n",'File', $f);
+
+    for(qw(ARTIST ALBUM TITLE GENRE COMMENT)) {
+      if(!$tag->{$_}) {
+        push(@missing_tags, $_);
+        next;
+      }
+      else {
+        if($_ eq uc($changed_tag)) {
+          printf("%7s: \033[31;1m%s\033[0m\n", ucfirst(lc($_)),$tag->{$_});
+        }
+        else {
+        printf("%7s: %s\n", ucfirst(lc($_)),$tag->{$_});
+      }
+    }
+  }
+    if(scalar(@missing_tags) > 0) {
+      printf("\033[1mMissing\033[0m: \033[31m%s\033[0m", lc(join(", ",@missing_tags)));
+      printf("\n%7s\n", '---');
+    }
+  }
+  exit(0);
 }
 
-sub help {
-  print << "HLEP";
-  $APP $VERSION
-  USAGE: id3shit [OPTIONS] <FILES>
+sub remove_tags {
+  my @files = @_;
 
-  OPTIONS:
-    -t  --tags    Show ID3V{1,2} tags
-    -i  --info    Show audio information
-    -r  --remove  Remove known tags
-    -w  --write   Write tags. The syntax is --write FIELD VALUE FILE
-                  Legal fields are ARTIST, ALBUM, TITLE, YEAR, COMMENT,
-                  TRACKNUM, GENRE.
+  for my $f(@files) {
+    my $bytes_removed = remove_mp3tag($f, 'ALL');
+    if($bytes_removed < 0) {
+      printf("No tags to remove on \033[1m$f\033[0m!\n");
+      exit(1);
+    }
+    else {
+      printf("Removed %d bytes from \033[1m$f\033[0m\n", $bytes_removed);
+    }
+  }
+  exit(0);
+}
 
-                  Examples:
-                  --write artist laleh *.mp3
-                  Will give us something like:
-                  >> ARTIST: Laleh
-HLEP
+sub rename_by_tag {
+  my @nameless = @_;
+
+  for my $f(@nameless) {
+    my $info  = get_mp3tag($f);
+    if(!$info) {
+      printf("\033[1m$f\033[0m: No tags available\n");
+      exit(1);
+    }
+
+    (my $extension) = $f =~ m;\.(.+)$;;
+    if(!$extension) {
+      $extension = 'mp3';
+    }
+
+    my ($artist,$album,$title,$year,$genre,$comment,$tracknum)
+      = ($info->{ARTIST}, $info->{ALBUM}, $info->{TITLE}, $info->{YEAR},
+        $info->{GENRE}, $info->{COMMENT}, $info->{TRACKNUM});
+
+    if(!defined($artist)) {
+      print("$f: Missing artist tag\n");
+    }
+    for(($artist,$album,$title,)) {
+      s;\s;_;g;
+      s;\(;-;g;
+      s;\);-;g;
+      s;/;-;g;
+    }
+    my $newfile = sprintf("%s_-_%s-%s",$artist, $album, $title) . ".$extension";
+    print "\033[1mOld\033[0m: \033[31m $f\033[0m\n";
+    print "\033[1mNew\033[0m: \033[34m $newfile\033[0m\n";
+
+    print "Accept [y/N]: ";
+    chomp(my $confirmation = <STDIN>);
+
+    exit(0) if(lc($confirmation) ne 'y');
+    print "---\n";
+
+    if(move("$f", $newfile)) {
+      printf("%s => \033[1m%s\033[0m\n", $f, $newfile);
+    }
+    else {
+      print("[$f => $newfile]: \033[1m$!\033[0m");
+    }
+  }
+  exit(0);
+}
+
+sub write_tags {
+  my $tag_name = shift;
+  my $tag_data = shift;
+  my @files = @_;
+  for my $f(@files) {
+    my $tags = get_mp3tag($f);
+    $tags->{uc($tag_name)} = ucfirst($tag_data); # ARTIST Laleh
+    if(set_mp3tag($f, $tags)) {
+      read_tags($tag_name,$f);
+    }
+    else {
+      print($!);
+    }
+  }
+  exit(0);
+}
+
+sub list_genres {
+  for my $genre(sort(keys(%mp3_genres))) {
+    printf("%2d: %s\n", $mp3_genres{$genre},$genre);
+  }
+  exit(0);
+}
+
+sub usage {
+  print << "EOF";
+  $APP $VERSION $COPYRIGHT
+
+  Usage: id3shit [OPTION] FILES
+EOF
+  exit(0);
 }
