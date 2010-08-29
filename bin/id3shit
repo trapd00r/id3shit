@@ -10,15 +10,16 @@ use MP3::Info ':genres';
 use File::Copy;
 use Getopt::Long;
 use Pod::Usage;
+use encoding 'utf8';
 
 pod2usage(verbose=>1) unless(@ARGV);
 
 my $mp3 = MP3::Info->new();
 
-our(@opt_write);
+our(@opt_write,@opt_rename);
 GetOptions(
   'tags=s{1,}'    => sub {shift; read_tags(@_);},
-  'rename=s{1,}'  => sub {shift; rename_by_tag(@_);},
+  'rename=s{1,}'  => \@opt_rename,
   'info=s{1,}'    => sub {shift; show_info(@_);},
   'genres'        => \&list_genres,
   'write=s{1,}'   => \@opt_write,
@@ -27,8 +28,8 @@ GetOptions(
   'man'           => sub {pod2usage(verbose=>3);},
 
 );
-
 write_tags(@opt_write) if(@opt_write);
+rename_by_tag(@opt_rename) if(@opt_rename);
 
 sub show_info {
   my @files = @_;
@@ -103,8 +104,8 @@ sub rename_by_tag {
   for my $f(@nameless) {
     my $info  = get_mp3tag($f);
     if(!$info) {
-      printf("\033[1m$f\033[0m: No tags available\n");
-      exit(1);
+      printf("\033[1m\033[31m%6s\033[0m: %s\n",'NO TAG', $f);
+      next;
     }
 
     (my $extension) = $f =~ m;\.(.+)$;;
@@ -126,8 +127,12 @@ sub rename_by_tag {
       s;/;-;g;
     }
     my $newfile = sprintf("%s_-_%s-%s",$artist, $album, $title) . ".$extension";
-    print "\033[1mOld\033[0m: \033[31m $f\033[0m\n";
-    print "\033[1mNew\033[0m: \033[34m $newfile\033[0m\n";
+    if($f eq $newfile) {
+      printf("\033[1m%6s\033[0m: %s\n", 'OK', $f);
+      next;
+    }
+    printf("\033[1m%6s\033[0m:\033[31m %s\033[0m\n", 'OLD',$f);
+    printf("\033[1m%6s\033[0m:\033[34m %s\033[0m\n", 'NEW',$newfile);
 
     print "Accept [y/N]: ";
     chomp(my $confirmation = <STDIN>);
@@ -141,6 +146,7 @@ sub rename_by_tag {
     else {
       print("[$f => $newfile]: \033[1m$!\033[0m");
     }
+    print "---\n";
   }
   exit(0);
 }
