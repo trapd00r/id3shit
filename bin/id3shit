@@ -16,18 +16,21 @@ pod2usage(verbose=>1) unless(@ARGV);
 
 my $mp3 = MP3::Info->new();
 
-our(@opt_write,@opt_rename);
+our(@opt_write,@opt_rename,@opt_read_tags,@opt_read_info,@opt_strip_tags);
 GetOptions(
-  'tags=s{1,}'    => sub {shift; read_tags(@_);},
+  'tags=s{1,}'    => \@opt_read_tags,
   'rename=s{1,}'  => \@opt_rename,
-  'info=s{1,}'    => sub {shift; show_info(@_);},
+  'info=s{1,}'    => \@opt_read_info,
   'genres'        => \&list_genres,
   'write=s{1,}'   => \@opt_write,
-  'strip=s{1,}'   => sub {shift; remove_tags(@_);},
+  'strip=s{1,}'   => \@opt_strip_tags,,
   'help'          => sub {pod2usage(verbose=>1);},
   'man'           => sub {pod2usage(verbose=>3);},
 
 );
+read_tags(@opt_read_tags)  if(@opt_read_tags);
+rename_by_tag(@opt_rename) if(@opt_rename);
+show_info(@opt_read_info)  if(@opt_read_info);
 write_tags(@opt_write) if(@opt_write);
 rename_by_tag(@opt_rename) if(@opt_rename);
 
@@ -55,32 +58,28 @@ sub read_tags {
     push(@files, $changed_tag); # ... nope
   }
 
-  my @missing_tags;
   for my $f(@files) {
     my $tag = get_mp3tag($f);
     printf("%7s: \033[1m%s\033[0m\n",'File', $f);
 
     for(qw(ARTIST ALBUM TITLE GENRE COMMENT)) {
-      if(!$tag->{$_}) {
-        push(@missing_tags, $_);
-        next;
+      if(!($tag->{$_})) {
+        printf("\e[31;1m%7s\e[0m: %s\n", ucfirst(lc($_)), 'Missing');
       }
       else {
         if($_ eq uc($changed_tag)) {
           printf("%7s: \033[31;1m%s\033[0m\n", ucfirst(lc($_)),$tag->{$_});
         }
         else {
-        printf("%7s: %s\n", ucfirst(lc($_)),$tag->{$_});
+          printf("%7s: %s\n", ucfirst(lc($_)),$tag->{$_});
+        }
       }
     }
-  }
-    if(scalar(@missing_tags) > 0) {
-      printf("\033[1mMissing\033[0m: \033[31m%s\033[0m", lc(join(", ",@missing_tags)));
-      printf("\n%7s\n", '---');
-    }
+    print "\e[30;1m",'-' x 20, "\e[0m\n";
   }
   exit(0);
 }
+
 
 sub remove_tags {
   my @files = @_;
