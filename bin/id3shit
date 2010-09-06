@@ -46,6 +46,7 @@ sub show_info {
     for my $k(sort(keys(%{$info}))) {
       printf("%12s: %s\n",ucfirst(lc($k)),$info->{$k}) unless(ref($info->{$k}));
     }
+    print "\e[30;1m",'-' x 20, "\e[0m\n";
   }
   exit(0);
 }
