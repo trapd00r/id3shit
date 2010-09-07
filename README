@@ -11,6 +11,8 @@ DESCRIPTION
     It can read, write and strip tags, rename files based on the metadata
     and that's about it.
 
+    All functions will operate recursively if given a directory.
+
 OPTIONS
       -t,   --tags    show tags for FILEs
       -i,   --info    show audio info for FILEs
@@ -33,12 +35,14 @@ AUTHOR
     Written by Magnus Woldrich.
 
 REPORTING BUGS
-    Report bugs to trapd00r@trapd00r.se
+    Report bugs and/or feature requests to trapd00r@trapd00r.se or use the
+    issue tracker located at http://github.com/trapd00r/id3shit/issues
 
     id3shit homepage: http://github.com/trapd00r/id3shit
 
 COPYRIGHT
-    Copyright (C) 2010 Magnus Woldrich.
+    Copyright (C) 2010 Magnus Woldrich Copyright (C) 2009 Olof Johansson,
+    Magnus Woldrich
 
     License: GPLv2
 
@@ -57,8 +61,5 @@ HISTORY
 
     As of today (2010-08-17), I once again felt the need to edit some id3
     tags. I remembered id3shit and it worked just fine, but I had to check
-    the source code, and man, it was fugly.
-
-    All programmers are familiar with that cycle though, and that's a good
-    thing. :)
+    the source code and man, it was fugly.
 
