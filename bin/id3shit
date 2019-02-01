@@ -1,9 +1,11 @@
 #!/usr/bin/perl
 use strict;
+use vars qw($VERSION);
+$VERSION = '2.60';
 
 our $APP       = 'id3shit';
-our $VERSION   = '2.56';
 our $DEBUG     = 0;
+
 
 use Data::Dumper;
 use MP3::Info;
