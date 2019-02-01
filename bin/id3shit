@@ -2,7 +2,7 @@
 use strict;
 
 our $APP       = 'id3shit';
-our $VERSION   = '2.52';
+our $VERSION   = '2.54';
 our $DEBUG     = 0;
 
 use Data::Dumper;
@@ -298,7 +298,7 @@ Written by Magnus Woldrich.
 
 =head1 REPORTING BUGS
 
-Report bugs and/or feature requests to trapd00r@trapd00r.se or use the
+Report bugs and/or feature requests to m@japh.se  or use the
 issue tracker located at http://github.com/trapd00r/id3shit/issues
 
 id3shit homepage: http://github.com/trapd00r/id3shit
