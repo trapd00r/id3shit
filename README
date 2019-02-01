@@ -35,14 +35,15 @@ AUTHOR
     Written by Magnus Woldrich.
 
 REPORTING BUGS
-    Report bugs and/or feature requests to m@japh.se or use the
-    issue tracker located at http://github.com/trapd00r/id3shit/issues
+    Report bugs and/or feature requests to m@japh.se or use the issue
+    tracker located at http://github.com/trapd00r/id3shit/issues
 
     id3shit homepage: http://github.com/trapd00r/id3shit
 
 COPYRIGHT
-    Copyright (C) 2010 Magnus Woldrich Copyright (C) 2009 Olof Johansson,
-    Magnus Woldrich
+    Copyright (C) 2010, 2019- Magnus Woldrich
+
+    Copyright (C) 2009 Olof Johansson, Magnus Woldrich
 
     License: GPLv2
 
