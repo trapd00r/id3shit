@@ -31,6 +31,17 @@ WriteMakefile1(
       },
     },
   },
+  (eval { ExtUtils::MakeMaker->VERSION(6.46) } ? (META_MERGE => {
+      'meta-spec' => { version => 2 },
+      resources => {
+          repository => {
+              type => 'git',
+              url  => 'https://github.com/trapd00r/id3shit.git',
+              web  => 'https://github.com/trapd00r/id3shit',
+          },
+      }})
+   : ()
+  ),
   MAN1PODS           => { },
   dist               => { COMPRESS => q{gzip -9f},    SUFFIX => q{gz}, },
   clean              => { FILES    => q{},                  },
